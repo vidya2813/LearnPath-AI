@@ -1,16 +1,11 @@
 
-import json
 import os
-from urllib.parse import quote_plus
-
+import json
 import joblib
 import pandas as pd
 import streamlit as st
 
-
-# ==================================================
-# 1. PAGE CONFIGURATION
-# ==================================================
+# ---------------- PAGE CONFIGURATION ----------------
 
 st.set_page_config(
     page_title="LearnPath AI",
@@ -18,792 +13,515 @@ st.set_page_config(
     layout="wide"
 )
 
+MODEL_FILE = "learnpath_model.joblib"
+PROGRESS_FILE = "learning_progress.json"
+
 st.title("🎓 LearnPath AI")
 st.subheader("Your Personalized Learning Path Generator")
 
 st.write(
-    "Learn new skills step by step. Get a personalized roadmap, "
-    "study notes, quizzes, and recommendations about what to practise."
+    "Tell us about your current skills and learning goals. "
+    "Our ML model will recommend a learning path for you."
 )
 
-st.divider()
-
-
-# ==================================================
-# 2. FILE PATHS
-# ==================================================
-
-MODEL_FILE = "learnpath_model.joblib"
-PROGRESS_FILE = "learning_progress.json"
-
-
-# ==================================================
-# 3. LEARNING ROADMAPS
-# ==================================================
+# ---------------- LEARNING ROADMAPS ----------------
 
 roadmaps = {
     "Python Programming": [
         "Python variables and data types",
+        "Conditional statements",
+        "Loops",
+        "Functions",
+        "Lists, tuples, sets and dictionaries",
+        "File handling",
+        "Mini project using Python"
+    ],
+
+    "Programming Fundamentals": [
+        "Introduction to programming",
+        "Variables and data types",
         "Operators and expressions",
         "Conditional statements",
         "Loops",
-        "Lists, tuples, sets and dictionaries",
         "Functions",
-        "File handling",
-        "Mini Python project"
+        "Basic problem-solving programs"
     ],
 
     "Data Structures": [
         "Introduction to data structures",
-        "Arrays and array operations",
-        "Linear search and binary search",
-        "Bubble sort and selection sort",
+        "Arrays",
+        "Searching algorithms",
+        "Sorting algorithms",
         "Linked lists",
-        "Stacks",
-        "Queues and circular queues",
-        "Trees and heaps"
+        "Stacks and queues",
+        "Trees and graphs"
     ],
 
     "DBMS": [
         "Introduction to DBMS",
-        "Relational model and tables",
-        "Primary keys and foreign keys",
-        "Integrity constraints",
+        "Relational model",
+        "Keys and integrity constraints",
         "SQL queries",
-        "Relational algebra",
-        "Functional dependencies",
-        "Normalization: 1NF, 2NF and 3NF"
+        "Joins and subqueries",
+        "Normalization: 1NF, 2NF and 3NF",
+        "Transactions and concurrency"
     ],
 
     "Java Programming": [
-        "Java introduction and syntax",
+        "Java basics and syntax",
         "Variables and data types",
         "Conditional statements and loops",
         "Classes and objects",
-        "Constructors and the this keyword",
         "Inheritance and polymorphism",
-        "Interfaces and abstract classes",
-        "Exception handling"
+        "Abstraction and interfaces",
+        "Exception handling and collections"
     ],
 
     "Mathematics": [
-        "Properties of integers",
-        "Division theorem",
-        "Greatest common divisor (GCD)",
-        "Euclidean algorithm",
-        "Least common multiple (LCM)",
-        "Prime numbers",
-        "Modular arithmetic",
-        "Mathematical induction"
+        "Logic and propositions",
+        "Sets and relations",
+        "Functions",
+        "Mathematical induction",
+        "Number theory",
+        "Combinatorics",
+        "Probability"
     ],
 
     "Artificial Intelligence": [
-        "Introduction to Artificial Intelligence",
+        "Introduction to AI",
         "Intelligent agents",
         "Problem-solving and search",
-        "Breadth-first search and depth-first search",
         "Knowledge representation",
-        "Reasoning in AI",
+        "Reasoning",
         "Introduction to machine learning",
-        "Build a simple AI project"
+        "Build a beginner AI project"
     ],
 
     "Machine Learning": [
-        "Introduction to Machine Learning",
-        "Supervised and unsupervised learning",
-        "Features and labels",
-        "Training and testing datasets",
-        "Classification algorithms",
-        "Regression algorithms",
-        "Model evaluation",
-        "Build a machine learning project"
+        "Introduction to machine learning",
+        "Python and data handling",
+        "NumPy and pandas",
+        "Data visualization",
+        "Supervised learning",
+        "Unsupervised learning",
+        "Model evaluation and a mini project"
     ],
 
     "DevOps": [
         "Introduction to DevOps",
-        "Git and version control",
-        "GitHub basics",
-        "Linux command-line basics",
-        "Continuous integration",
-        "Continuous delivery and deployment",
-        "Docker fundamentals",
-        "Build a simple CI/CD workflow"
+        "Linux and command-line basics",
+        "Git and GitHub",
+        "Build tools",
+        "CI/CD fundamentals",
+        "Docker basics",
+        "Deployment fundamentals"
     ],
 
     "GATE Preparation": [
         "Understand the GATE syllabus",
         "Engineering mathematics",
-        "General aptitude",
-        "Data Structures and Algorithms",
-        "Database Management Systems",
-        "Operating Systems",
-        "Computer Networks",
-        "Previous-year questions and revision"
+        "Discrete mathematics",
+        "Data structures and algorithms",
+        "Computer organization",
+        "DBMS and operating systems",
+        "Previous-year questions and mock tests"
     ]
 }
 
-
-# ==================================================
-# 4. STUDY NOTES
-# ==================================================
+# ---------------- STUDY NOTES ----------------
 
 notes = {
-    "Python Programming": """
-### Python Variables and Data Types
+    "Python Programming": {
+        "Variables": "Variables store values. Example: age = 18",
+        "Conditions": "Use if, elif and else to make decisions.",
+        "Loops": "Use for and while loops to repeat instructions.",
+        "Functions": "Functions are reusable blocks of code defined using def."
+    },
 
-A variable stores a value.
+    "Programming Fundamentals": {
+        "Variables": "Variables store data used by a program.",
+        "Conditions": "Conditional statements select which code to execute.",
+        "Loops": "Loops repeat a block of instructions.",
+        "Functions": "Functions divide a program into reusable parts."
+    },
 
-```python
-name = "Ravi"
-age = 18
-marks = 85.5
-```
+    "Data Structures": {
+        "Arrays": "Arrays store elements that can be accessed using indexes.",
+        "Searching": "Linear search checks elements one by one.",
+        "Sorting": "Sorting arranges data in ascending or descending order.",
+        "Linked Lists": "Linked lists contain nodes connected using pointers.",
+        "Stacks": "Stacks follow LIFO: Last In, First Out.",
+        "Queues": "Queues generally follow FIFO: First In, First Out."
+    },
 
-Common data types:
-- int: whole numbers
-- float: decimal numbers
-- str: text
-- bool: True or False
+    "DBMS": {
+        "Keys": "Keys help identify records and establish relationships.",
+        "SQL": "SQL is used to define, query and manipulate relational data.",
+        "Normalization": "Normalization organizes tables to reduce redundancy.",
+        "Transactions": "Transactions are logical units of database work."
+    },
 
-### Conditional Statements
+    "Java Programming": {
+        "Classes": "A class defines the data and behavior of objects.",
+        "Objects": "An object is an instance of a class.",
+        "Inheritance": "Inheritance lets a class reuse another class's features.",
+        "Polymorphism": "Polymorphism allows one interface to have different behaviors.",
+        "Exceptions": "Exception handling manages errors using try, catch and finally."
+    },
 
-```python
-marks = 75
+    "Mathematics": {
+        "Logic": "Propositional logic studies statements and their truth values.",
+        "Sets": "A set is a collection of distinct elements.",
+        "Induction": "Mathematical induction proves statements for integers.",
+        "Number Theory": "Number theory studies integers, divisibility and primes."
+    },
 
-if marks >= 40:
-    print("Pass")
-else:
-    print("Fail")
-```
+    "Artificial Intelligence": {
+        "AI": "Artificial intelligence builds systems that perform intelligent tasks.",
+        "Search": "Search algorithms explore possible states to find solutions.",
+        "Agents": "An intelligent agent perceives its environment and takes actions."
+    },
 
-### Loops
+    "Machine Learning": {
+        "ML": "Machine learning learns patterns from data.",
+        "Supervised Learning": "Learns from labeled examples.",
+        "Unsupervised Learning": "Finds patterns in data without target labels.",
+        "Evaluation": "Metrics help measure model performance."
+    },
 
-Loops repeat a block of code.
+    "DevOps": {
+        "Git": "Git tracks changes to files and supports collaboration.",
+        "CI/CD": "CI/CD automates integration, testing and delivery workflows.",
+        "Docker": "Docker packages applications and their dependencies into containers."
+    },
 
-```python
-for i in range(1, 4):
-    print(i)
-```
-
-Output: 1, 2, 3
-""",
-
-    "Data Structures": """
-### What is a Data Structure?
-
-A data structure organizes data so that it can be stored and processed efficiently.
-
-### Stack
-
-A stack follows LIFO: Last In, First Out.
-
-Main operations:
-- Push: insert an element
-- Pop: remove the top element
-- Peek: view the top element
-
-### Queue
-
-A queue follows FIFO: First In, First Out.
-
-Main operations:
-- Enqueue: insert an element
-- Dequeue: remove an element
-
-### Searching
-
-Linear search checks elements one by one.
-
-Binary search repeatedly divides a sorted search range into halves.
-""",
-
-    "DBMS": """
-### What is DBMS?
-
-A Database Management System helps users store, organize and retrieve data.
-
-### Keys
-
-- Primary key: uniquely identifies each row.
-- Foreign key: refers to a key in another table.
-- Candidate key: a minimal set of attributes that uniquely identifies a row.
-
-### SQL Example
-
-```sql
-SELECT *
-FROM Student
-WHERE marks >= 80;
-```
-
-### Normalization
-
-Normalization organizes tables to reduce unwanted data duplication and modification problems.
-
-- 1NF: each field contains an atomic value.
-- 2NF: 1NF plus no partial dependency of a non-key attribute on a candidate key.
-- 3NF: 2NF plus no inappropriate transitive dependency of non-key attributes on a candidate key.
-""",
-
-    "Java Programming": """
-### Classes and Objects
-
-A class defines the structure and behaviour of objects.
-
-```java
-class Student {
-    int marks;
-
-    void display() {
-        System.out.println(marks);
+    "GATE Preparation": {
+        "Syllabus": "Use the official syllabus to organize your preparation.",
+        "Revision": "Revise concepts and solve previous-year questions regularly.",
+        "Mock Tests": "Mock tests help identify topics needing more practice."
     }
 }
-```
 
-Creating an object:
+# ---------------- QUIZ QUESTIONS ----------------
 
-```java
-Student s = new Student();
-s.marks = 90;
-s.display();
-```
-
-### Inheritance
-
-Inheritance allows a class to acquire accessible features from another class.
-
-### Polymorphism
-
-Polymorphism allows the same interface or method name to have different behaviour.
-
-### Exception Handling
-
-Java uses try, catch and finally to manage exceptions.
-""",
-
-    "Mathematics": """
-### Greatest Common Divisor (GCD)
-
-The GCD is the greatest positive integer that divides two integers exactly.
-
-Example:
-
-GCD(12, 18) = 6
-
-### Euclidean Algorithm
-
-Repeatedly divide and replace the pair with the divisor and remainder until the remainder is zero.
-
-Example:
-
-18 = 12 × 1 + 6
-
-12 = 6 × 2 + 0
-
-Therefore, GCD(18, 12) = 6.
-
-### Prime Numbers
-
-A prime number is an integer greater than 1 with exactly two positive divisors: 1 and itself.
-""",
-
-    "Artificial Intelligence": """
-### What is Artificial Intelligence?
-
-AI involves building systems that perform tasks associated with abilities such as reasoning, learning and decision-making.
-
-### Intelligent Agents
-
-An intelligent agent observes its environment and takes actions.
-
-### Search Algorithms
-
-- BFS: explores a graph level by level.
-- DFS: explores a path deeply before backtracking.
-
-### Applications
-
-AI is used in image recognition, language processing, recommendations and robotics.
-""",
-
-    "Machine Learning": """
-### What is Machine Learning?
-
-Machine Learning (ML) allows computer systems to learn patterns from data and use them to make predictions or decisions.
-
-### Types of ML
-
-- Supervised learning: learns from labelled examples.
-- Unsupervised learning: finds patterns in unlabelled data.
-- Reinforcement learning: learns through interaction and feedback.
-
-### Classification
-
-Classification predicts a category, such as spam or not spam.
-
-### Model Evaluation
-
-A test dataset helps evaluate how well a model performs on data it did not train on.
-""",
-
-    "DevOps": """
-### What is DevOps?
-
-DevOps combines development and operations practices to help teams deliver and maintain software reliably.
-
-### Git
-
-Git tracks changes to files and source code.
-
-Common commands:
-
-```bash
-git init
-git status
-git add .
-git commit -m "First commit"
-```
-
-### CI/CD
-
-Continuous Integration (CI) helps integrate and test code changes frequently.
-
-Continuous Delivery or Deployment (CD) automates later stages of delivering software.
-
-### Docker
-
-Docker packages an application and its dependencies into containers.
-""",
-
-    "GATE Preparation": """
-### Starting GATE Preparation
-
-1. Read the official syllabus for your paper.
-2. Learn one concept at a time.
-3. Solve topic-wise practice questions.
-4. Review mistakes.
-5. Practise previous-year questions.
-
-### Useful Areas to Build
-
-- Engineering mathematics
-- General aptitude
-- Data Structures and Algorithms
-- DBMS
-- Operating Systems
-- Computer Networks
-
-Check the official GATE syllabus for your examination year before finalizing your study plan.
-"""
-}
-
-
-# ==================================================
-# 5. QUIZ QUESTIONS
-# Each question contains:
-# (question, options, correct_option_index)
-# ==================================================
-
-quiz_questions = {
+quizzes = {
     "Python Programming": [
-        (
-            "Which function displays output in Python?",
-            ["input()", "print()", "display()", "show()"],
-            1
-        ),
-        (
-            "Which data type stores True or False?",
-            ["int", "str", "bool", "float"],
-            2
-        ),
-        (
-            "Which keyword is used to define a function?",
-            ["function", "define", "fun", "def"],
-            3
-        )
+        {
+            "question": "Which keyword defines a function in Python?",
+            "options": ["func", "def", "function", "define"],
+            "answer": 1,
+            "topic": "Functions"
+        },
+        {
+            "question": "Which data type stores True or False?",
+            "options": ["int", "str", "bool", "list"],
+            "answer": 2,
+            "topic": "Data types"
+        },
+        {
+            "question": "Which loop iterates over a sequence?",
+            "options": ["for", "switch", "case", "select"],
+            "answer": 0,
+            "topic": "Loops"
+        }
+    ],
+
+    "Programming Fundamentals": [
+        {
+            "question": "Which statement is used for a decision?",
+            "options": ["if", "print", "input", "import"],
+            "answer": 0,
+            "topic": "Conditions"
+        },
+        {
+            "question": "Which construct repeats instructions?",
+            "options": ["Variable", "Loop", "Comment", "String"],
+            "answer": 1,
+            "topic": "Loops"
+        },
+        {
+            "question": "What is a function mainly used for?",
+            "options": [
+                "Storing only numbers",
+                "Repeating code manually",
+                "Reusing a block of code",
+                "Deleting a program"
+            ],
+            "answer": 2,
+            "topic": "Functions"
+        }
     ],
 
     "Data Structures": [
-        (
-            "Which principle does a stack follow?",
-            ["FIFO", "LIFO", "Random order", "Sorted order"],
-            1
-        ),
-        (
-            "Which principle does a normal queue follow?",
-            ["LIFO", "Random order", "FIFO", "Reverse order"],
-            2
-        ),
-        (
-            "Which search algorithm requires sorted data?",
-            ["Linear search", "Binary search", "Neither", "Both always"],
-            1
-        )
+        {
+            "question": "Which data structure follows LIFO?",
+            "options": ["Queue", "Stack", "Array", "Graph"],
+            "answer": 1,
+            "topic": "Stacks"
+        },
+        {
+            "question": "Which search works on a sorted array by halving the search range?",
+            "options": ["Linear search", "Binary search", "Bubble sort", "DFS"],
+            "answer": 1,
+            "topic": "Searching"
+        },
+        {
+            "question": "A node in a basic singly linked list contains data and what?",
+            "options": ["A pointer", "A loop", "A class only", "A database"],
+            "answer": 0,
+            "topic": "Linked Lists"
+        }
     ],
 
     "DBMS": [
-        (
-            "What is the main purpose of a DBMS?",
-            [
-                "Only to draw pictures",
-                "To manage databases",
-                "Only to compile Java",
-                "To design web pages"
+        {
+            "question": "What does DBMS stand for?",
+            "options": [
+                "Data Backup Management Software",
+                "Database Management System",
+                "Digital Base Memory System",
+                "Database Machine Setup"
             ],
-            1
-        ),
-        (
-            "What does a primary key do?",
-            [
-                "Allows duplicate row identifiers",
-                "Stores only images",
-                "Uniquely identifies a row",
-                "Deletes all records"
-            ],
-            2
-        ),
-        (
-            "Which SQL command retrieves data?",
-            ["INSERT", "UPDATE", "DELETE", "SELECT"],
-            3
-        )
+            "answer": 1,
+            "topic": "Introduction to DBMS"
+        },
+        {
+            "question": "Which key uniquely identifies a row?",
+            "options": ["Foreign key", "Primary key", "Duplicate key", "Null key"],
+            "answer": 1,
+            "topic": "Keys"
+        },
+        {
+            "question": "Which SQL command retrieves records?",
+            "options": ["SELECT", "DELETE", "DROP", "UPDATE"],
+            "answer": 0,
+            "topic": "SQL"
+        }
     ],
 
     "Java Programming": [
-        (
-            "Which keyword is used to create a class in Java?",
-            ["class", "define", "struct", "object"],
-            0
-        ),
-        (
-            "Which method is the usual entry point of a Java application?",
-            [
-                "start()",
-                "main()",
-                "runMain()",
-                "execute()"
-            ],
-            1
-        ),
-        (
-            "Which keyword creates an object in Java?",
-            ["class", "this", "new", "static"],
-            2
-        )
+        {
+            "question": "Which keyword creates an object?",
+            "options": ["class", "new", "this", "void"],
+            "answer": 1,
+            "topic": "Objects"
+        },
+        {
+            "question": "Which keyword is used for inheritance between classes?",
+            "options": ["implements", "inherits", "extends", "superclass"],
+            "answer": 2,
+            "topic": "Inheritance"
+        },
+        {
+            "question": "Which block handles an exception?",
+            "options": ["try", "catch", "class", "package"],
+            "answer": 1,
+            "topic": "Exceptions"
+        }
     ],
 
     "Mathematics": [
-        (
-            "What is GCD(12, 18)?",
-            ["2", "3", "6", "9"],
-            2
-        ),
-        (
-            "What is 2 to the power of 3?",
-            ["5", "6", "8", "9"],
-            2
-        ),
-        (
-            "Which number is prime?",
-            ["9", "15", "17", "21"],
-            2
-        )
+        {
+            "question": "What is the value of 7 mod 3?",
+            "options": ["0", "1", "2", "3"],
+            "answer": 1,
+            "topic": "Number Theory"
+        },
+        {
+            "question": "Which is a prime number?",
+            "options": ["9", "15", "17", "21"],
+            "answer": 2,
+            "topic": "Number Theory"
+        },
+        {
+            "question": "What is the set containing no elements called?",
+            "options": ["Universal set", "Empty set", "Infinite set", "Subset"],
+            "answer": 1,
+            "topic": "Sets"
+        }
     ],
 
     "Artificial Intelligence": [
-        (
-            "Which is an application of AI?",
-            [
-                "Image recognition",
-                "A plain notebook",
-                "An ordinary ruler",
-                "An unpowered chair"
+        {
+            "question": "What does AI stand for?",
+            "options": [
+                "Automated Internet",
+                "Artificial Intelligence",
+                "Advanced Information",
+                "Applied Interface"
             ],
-            0
-        ),
-        (
-            "Which algorithm explores a graph level by level?",
-            ["DFS", "BFS", "Binary search", "Selection sort"],
-            1
-        ),
-        (
-            "What does an intelligent agent do?",
-            [
-                "Only stores files",
-                "Only displays text",
-                "Observes its environment and acts",
-                "Always performs sorting"
-            ],
-            2
-        )
+            "answer": 1,
+            "topic": "AI"
+        },
+        {
+            "question": "Which is a common AI search algorithm?",
+            "options": ["Breadth-first search", "Bubble sort", "Insertion sort", "Merge only"],
+            "answer": 0,
+            "topic": "Search"
+        },
+        {
+            "question": "An intelligent agent interacts with what?",
+            "options": ["Its environment", "Only a keyboard", "Only a database", "A compiler only"],
+            "answer": 0,
+            "topic": "Agents"
+        }
     ],
 
     "Machine Learning": [
-        (
-            "What is Machine Learning?",
-            [
-                "A type of computer hardware",
-                "A way for systems to learn patterns from data",
-                "A programming keyboard",
-                "A database table"
+        {
+            "question": "What does machine learning primarily do?",
+            "options": [
+                "Learns patterns from data",
+                "Repairs hardware",
+                "Creates electricity",
+                "Only stores files"
             ],
-            1
-        ),
-        (
-            "Which task is a classification problem?",
-            [
-                "Predicting an exact temperature",
-                "Adding two numbers",
-                "Predicting spam or not spam",
-                "Sorting a list alphabetically"
+            "answer": 0,
+            "topic": "ML"
+        },
+        {
+            "question": "Which is a supervised learning task?",
+            "options": [
+                "Clustering unlabeled data",
+                "Classification using labeled data",
+                "Random file sorting",
+                "Deleting duplicate files"
             ],
-            2
-        ),
-        (
-            "Why do we test a trained ML model?",
-            [
-                "To evaluate performance on unseen data",
-                "To delete the training data",
-                "To change the keyboard",
-                "To remove every feature"
+            "answer": 1,
+            "topic": "Supervised Learning"
+        },
+        {
+            "question": "Why evaluate a trained model?",
+            "options": [
+                "To measure performance",
+                "To rename the computer",
+                "To increase file size",
+                "To remove the dataset"
             ],
-            0
-        )
+            "answer": 0,
+            "topic": "Evaluation"
+        }
     ],
 
     "DevOps": [
-        (
-            "What is Git mainly used for?",
-            [
-                "Editing photographs",
-                "Version control",
-                "Playing music",
-                "Creating hardware"
-            ],
-            1
-        ),
-        (
-            "What does CI stand for in CI/CD?",
-            [
-                "Code Installation",
-                "Computer Internet",
-                "Continuous Integration",
-                "Central Information"
-            ],
-            2
-        ),
-        (
-            "What does Docker help create and run?",
-            ["Documents", "Spreadsheets", "Slides", "Containers"],
-            3
-        )
+        {
+            "question": "What is Git mainly used for?",
+            "options": ["Version control", "Image editing", "Video calls", "Database queries"],
+            "answer": 0,
+            "topic": "Git"
+        },
+        {
+            "question": "What does CI/CD help automate?",
+            "options": ["Software delivery workflows", "Typing", "Computer cleaning", "Screen brightness"],
+            "answer": 0,
+            "topic": "CI/CD"
+        },
+        {
+            "question": "What is Docker commonly used for?",
+            "options": ["Containers", "Spreadsheets", "Slide design", "Photo editing"],
+            "answer": 0,
+            "topic": "Docker"
+        }
     ],
 
     "GATE Preparation": [
-        (
-            "What should you consult to identify GATE topics?",
-            [
-                "A random timetable only",
-                "The official syllabus",
-                "Social media comments only",
-                "An unrelated textbook"
-            ],
-            1
-        ),
-        (
-            "Which data structure follows LIFO?",
-            ["Queue", "Stack", "Graph", "Array only"],
-            1
-        ),
-        (
-            "What is a useful way to practise for GATE?",
-            [
-                "Avoid solving questions",
-                "Read without revision",
-                "Solve previous-year questions",
-                "Study only on the exam day"
-            ],
-            2
-        )
+        {
+            "question": "What should you consult first to plan GATE study?",
+            "options": ["Official syllabus", "Random videos only", "Only social media", "No study material"],
+            "answer": 0,
+            "topic": "Syllabus"
+        },
+        {
+            "question": "What helps identify weak topics?",
+            "options": ["Mock tests", "Avoiding questions", "Skipping revision", "Only rereading titles"],
+            "answer": 0,
+            "topic": "Mock Tests"
+        },
+        {
+            "question": "What is useful for understanding question patterns?",
+            "options": ["Previous-year questions", "Ignoring the syllabus", "Guessing only", "Skipping practice"],
+            "answer": 0,
+            "topic": "Revision"
+        }
     ]
 }
 
-
-# ==================================================
-# 6. TOPIC LABELS FOR QUIZ QUESTIONS
-# Keep these in the same order as quiz_questions.
-# ==================================================
-
-quiz_topics = {
-    "Python Programming": [
-        "Output and print function",
-        "Variables and data types",
-        "Functions"
-    ],
-
-    "Data Structures": [
-        "Stack and LIFO",
-        "Queue and FIFO",
-        "Searching algorithms"
-    ],
-
-    "DBMS": [
-        "DBMS fundamentals",
-        "Primary keys",
-        "SQL queries"
-    ],
-
-    "Java Programming": [
-        "Classes and objects",
-        "Main method",
-        "Object creation"
-    ],
-
-    "Mathematics": [
-        "GCD",
-        "Powers and exponents",
-        "Prime numbers"
-    ],
-
-    "Artificial Intelligence": [
-        "AI applications",
-        "Search algorithms",
-        "Intelligent agents"
-    ],
-
-    "Machine Learning": [
-        "ML fundamentals",
-        "Classification",
-        "Model evaluation"
-    ],
-
-    "DevOps": [
-        "Version control with Git",
-        "CI/CD",
-        "Docker containers"
-    ],
-
-    "GATE Preparation": [
-        "GATE syllabus",
-        "Stacks",
-        "Previous-year questions"
-    ]
-}
-
-
-# ==================================================
-# 7. PROGRESS TRACKING FUNCTIONS
-# ==================================================
+# ---------------- PROGRESS STORAGE ----------------
 
 def load_progress():
-    """Load saved learning progress from a JSON file."""
     if os.path.exists(PROGRESS_FILE):
         try:
             with open(PROGRESS_FILE, "r", encoding="utf-8") as file:
                 data = json.load(file)
-
-            if isinstance(data, dict):
-                return data
-
+                return data if isinstance(data, dict) else {}
         except (json.JSONDecodeError, OSError):
-            pass
-
+            return {}
     return {}
 
 
-def save_progress():
-    """Save learning progress to a JSON file."""
+def save_progress(progress):
     try:
         with open(PROGRESS_FILE, "w", encoding="utf-8") as file:
-            json.dump(
-                st.session_state.progress_data,
-                file,
-                indent=4
-            )
+            json.dump(progress, file, indent=4)
     except OSError:
-        st.error("Unable to save progress. Check folder permissions.")
+        st.warning(
+            "Progress could not be saved permanently in this environment."
+        )
 
 
-def update_topic_progress(subject, topic, widget_key):
-    """Update progress when a topic checkbox changes."""
-    completed = st.session_state.progress_data.get(subject, [])
+if "progress" not in st.session_state:
+    st.session_state.progress = load_progress()
 
-    if st.session_state[widget_key]:
-        if topic not in completed:
-            completed.append(topic)
-    else:
-        if topic in completed:
-            completed.remove(topic)
+if "quiz_answers" not in st.session_state:
+    st.session_state.quiz_answers = {}
 
-    st.session_state.progress_data[subject] = completed
-    save_progress()
+if "quiz_submitted" not in st.session_state:
+    st.session_state.quiz_submitted = False
 
+# ---------------- SIDEBAR: PROFILE ----------------
 
-if "progress_data" not in st.session_state:
-    st.session_state.progress_data = load_progress()
+st.sidebar.header("👤 Your Learning Profile")
 
+age = st.sidebar.number_input(
+    "Age",
+    min_value=10,
+    max_value=100,
+    value=20
+)
 
-# ==================================================
-# 8. STUDENT PROFILE AND ML RECOMMENDATION
-# ==================================================
+python_level = st.sidebar.selectbox(
+    "Current programming level",
+    ["Beginner", "Intermediate", "Advanced"]
+)
 
-st.header("👤 1. Your Learning Profile")
+goal = st.sidebar.selectbox(
+    "Main learning goal",
+    [
+        "College exams",
+        "GATE preparation",
+        "Build projects",
+        "Improve programming skills",
+        "Career preparation"
+    ]
+)
 
-col1, col2 = st.columns(2)
+quiz_score = st.sidebar.slider(
+    "Current quiz score (%)",
+    min_value=0,
+    max_value=100,
+    value=50
+)
 
-with col1:
-    branch = st.selectbox(
-        "Choose your branch",
-        [
-            "CSE",
-            "CSE (AI & ML)",
-            "IT",
-            "ECE",
-            "Other"
-        ]
-    )
+study_minutes = st.sidebar.slider(
+    "Daily study time (minutes)",
+    min_value=10,
+    max_value=300,
+    value=60,
+    step=10
+)
 
-    python_level = st.selectbox(
-        "Your current programming level",
-        ["Beginner", "Intermediate", "Advanced"]
-    )
+# ---------------- CATEGORY MAPPING ----------------
 
-    quiz_score = st.slider(
-        "Your current quiz score (%)",
-        min_value=0,
-        max_value=100,
-        value=50,
-        step=5
-    )
-
-with col2:
-    study_minutes = st.slider(
-        "Daily study time (minutes)",
-        min_value=15,
-        max_value=300,
-        value=60,
-        step=15
-    )
-
-    goal = st.selectbox(
-        "Your main learning goal",
-        [
-            "College exams",
-            "GATE preparation",
-            "Build projects",
-            "Improve programming skills",
-            "Career preparation"
-        ]
-    )
-
-    selected_subject = st.selectbox(
-        "Choose a subject to study",
-        list(roadmaps.keys())
-    )
-
-
-# These numerical mappings must match the mappings used when
-# training your model in train_model.py.
 level_code_map = {
     "Beginner": 0,
     "Intermediate": 1,
@@ -818,18 +536,36 @@ goal_code_map = {
     "Career preparation": 1
 }
 
-category_to_subject = {
-    "Programming Fundamentals": "Python Programming",
-    "AI Fundamentals": "Artificial Intelligence",
-    "Machine Learning": "Machine Learning"
-}
+# ---------------- ML RECOMMENDATION ----------------
+
+st.header("🤖 2. Your ML Recommendation")
 
 recommended_category = None
 model_error = None
 
 if os.path.exists(MODEL_FILE):
     try:
-        model = joblib.load(MODEL_FILE)
+        saved_data = joblib.load(MODEL_FILE)
+
+        # FIX: The saved file is a dictionary, not the model itself.
+        model = (
+            saved_data["model"]
+            if isinstance(saved_data, dict)
+            else saved_data
+        )
+
+        if isinstance(saved_data, dict):
+            feature_names = saved_data.get(
+                "features",
+                ["python_level", "quiz_score", "study_minutes", "goal"]
+            )
+        else:
+            feature_names = [
+                "python_level",
+                "quiz_score",
+                "study_minutes",
+                "goal"
+            ]
 
         student_data = pd.DataFrame(
             [[
@@ -846,321 +582,278 @@ if os.path.exists(MODEL_FILE):
             ]
         )
 
+        # Ensure the input columns match the model's training order.
+        student_data = student_data[feature_names]
+
         recommended_category = model.predict(student_data)[0]
+
+        st.success(
+            f"Recommended category: {recommended_category}"
+        )
 
     except Exception as error:
         model_error = str(error)
+        st.warning(
+            "The ML recommendation could not be generated. "
+            "Check the saved model and training features."
+        )
+        st.caption(f"Technical detail: {model_error}")
 
 else:
-    model_error = (
+    st.warning(
         "The trained model file was not found. "
-        "Run train_model.py first."
+        "Run train_model.py to create it."
     )
 
+# ---------------- CHOOSE LEARNING PATH ----------------
 
-st.header("🤖 2. Your ML Recommendation")
+category_to_subject = {
+    "Programming Fundamentals": "Programming Fundamentals",
+    "Python Programming": "Python Programming",
+    "Data Structures": "Data Structures",
+    "DBMS": "DBMS",
+    "Java Programming": "Java Programming",
+    "Mathematics": "Mathematics",
+    "Artificial Intelligence": "Artificial Intelligence",
+    "Machine Learning": "Machine Learning",
+    "DevOps": "DevOps",
+    "GATE Preparation": "GATE Preparation"
+}
 
-if recommended_category is not None:
-    st.success(
-        f"Recommended learning category: **{recommended_category}**"
-    )
-
-    st.caption(
-        "This is a recommendation from your trained model. "
-        "Because the current dataset is small, treat it as a starting point."
-    )
+if recommended_category in category_to_subject:
+    default_subject = category_to_subject[recommended_category]
 else:
-    st.warning("The ML recommendation is not available yet.")
-    st.caption(model_error)
+    default_subject = "Python Programming"
 
+st.header("📚 3. Your Learning Roadmap")
 
-# Select which roadmap to display.
-if goal == "GATE preparation":
-    roadmap_subject = "GATE Preparation"
+subjects = list(roadmaps.keys())
 
-elif goal == "Build projects":
-    roadmap_subject = selected_subject
-
-elif goal == "College exams":
-    roadmap_subject = selected_subject
-
-elif recommended_category in category_to_subject:
-    roadmap_subject = category_to_subject[recommended_category]
-
-else:
-    roadmap_subject = selected_subject
-
-
-st.info(f"Your selected learning path: **{roadmap_subject}**")
-
-
-# ==================================================
-# 9. PERSONALIZED ROADMAP AND PROGRESS
-# ==================================================
-
-st.divider()
-st.header("🗺️ 3. Your Suggested Learning Roadmap")
-
-st.write(
-    "Complete each topic as you learn it. Your progress is saved "
-    "locally in learning_progress.json."
+default_index = (
+    subjects.index(default_subject)
+    if default_subject in subjects
+    else 0
 )
 
-topics = roadmaps[roadmap_subject]
-completed_topics = st.session_state.progress_data.get(
-    roadmap_subject, []
+selected_subject = st.selectbox(
+    "Choose or change your learning path",
+    subjects,
+    index=default_index,
+    key="selected_subject"
 )
 
-completed_count = sum(
-    1 for topic in topics if topic in completed_topics
+st.write(f"**Your selected learning path:** {selected_subject}")
+
+st.caption(
+    "The ML recommendation suggests a starting category. "
+    "You can change your learning path whenever you want."
 )
 
-progress_percentage = completed_count / len(topics)
+# ---------------- ROADMAP ----------------
 
-st.progress(progress_percentage)
+st.subheader(f"🗺️ Roadmap: {selected_subject}")
 
-st.write(
-    f"**Progress: {completed_count}/{len(topics)} topics completed "
-    f"({round(progress_percentage * 100)}%)**"
-)
+for index, topic in enumerate(roadmaps[selected_subject], start=1):
+    progress_key = f"{selected_subject}::{topic}"
 
-for index, topic in enumerate(topics):
-    widget_key = f"progress_{roadmap_subject}_{index}"
-
-    st.checkbox(
-        f"Step {index + 1}: {topic}",
-        value=topic in completed_topics,
-        key=widget_key,
-        on_change=update_topic_progress,
-        args=(roadmap_subject, topic, widget_key)
+    completed = st.checkbox(
+        f"Step {index}: {topic}",
+        value=bool(st.session_state.progress.get(progress_key, False)),
+        key=f"roadmap_{selected_subject}_{index}"
     )
 
-if completed_count == len(topics):
-    st.success("🎉 Excellent! You have completed this roadmap.")
+    if completed:
+        st.session_state.progress[progress_key] = True
+    else:
+        st.session_state.progress.pop(progress_key, None)
 
-elif completed_count > 0:
-    next_topic = next(
-        topic for topic in topics if topic not in completed_topics
+save_progress(st.session_state.progress)
+
+total_steps = len(roadmaps[selected_subject])
+completed_steps = sum(
+    1
+    for topic in roadmaps[selected_subject]
+    if st.session_state.progress.get(
+        f"{selected_subject}::{topic}",
+        False
     )
-    st.info(f"Your next topic: **{next_topic}**")
+)
 
+st.progress(
+    completed_steps / total_steps if total_steps else 0
+)
+
+st.write(f"**Roadmap progress:** {completed_steps}/{total_steps} steps completed")
+
+# ---------------- STUDY NOTES ----------------
+
+st.header("📝 4. Study Notes")
+
+subject_notes = notes.get(selected_subject, {})
+
+if subject_notes:
+    for topic, explanation in subject_notes.items():
+        with st.expander(topic):
+            st.write(explanation)
 else:
-    st.info(f"Start with: **{topics[0]}**")
+    st.info("Study notes are not available for this subject yet.")
 
+# ---------------- VIDEO SEARCH ----------------
 
-# ==================================================
-# 10. STUDY NOTES AND VIDEO LESSONS
-# ==================================================
+st.header("🎥 5. Find Learning Videos")
 
-st.divider()
-st.header("📚 4. Study Notes and Video Lessons")
-
-notes_subject = st.selectbox(
-    "Choose a subject for study notes",
-    list(notes.keys()),
-    key="notes_subject"
+video_topic = st.selectbox(
+    "Select a topic for video lessons",
+    roadmaps[selected_subject],
+    key="video_topic"
 )
 
-with st.expander("Open study notes", expanded=True):
-    st.markdown(notes[notes_subject])
-
-search_query = quote_plus(
-    notes_subject + " tutorial for beginners"
+video_query = (
+    video_topic.replace(" ", "+")
+    + "+"
+    + selected_subject.replace(" ", "+")
 )
 
-youtube_url = (
+video_url = (
     "https://www.youtube.com/results?search_query="
-    + search_query
+    + video_query
 )
 
 st.link_button(
-    "▶️ Find video lessons on YouTube",
-    youtube_url
+    "▶️ Search YouTube lessons",
+    video_url
 )
 
-st.caption(
-    "The YouTube button opens search results. Choose lessons "
-    "that match your syllabus and current level."
-)
+# ---------------- QUIZ ----------------
 
-st.write(
-    f"**Suggested daily study time:** {study_minutes} minutes"
-)
+st.header("🧠 6. Test Your Knowledge")
 
-if study_minutes < 30:
-    st.write("Try a short lesson and solve two or three practice questions.")
-elif study_minutes < 90:
-    st.write("Try learning one concept, practising questions, and reviewing mistakes.")
+subject_quiz = quizzes.get(selected_subject, [])
+
+if not subject_quiz:
+    st.info("No quiz is available for this subject yet.")
 else:
-    st.write("Divide your session into learning, practice, and revision breaks.")
+    with st.form(key=f"quiz_form_{selected_subject}"):
+        current_answers = {}
 
-
-# ==================================================
-# 11. QUIZ WITH TOPIC-WISE FEEDBACK
-# ==================================================
-
-st.divider()
-st.header("🧠 5. Test Your Knowledge")
-
-st.write(
-    "Answer the questions to find out which topics you may need "
-    "to revise. Your report is based on this quiz attempt."
-)
-
-quiz_subject = st.selectbox(
-    "Choose a quiz subject",
-    list(quiz_questions.keys()),
-    key="quiz_subject"
-)
-
-questions = quiz_questions[quiz_subject]
-quiz_topic_list = quiz_topics[quiz_subject]
-
-with st.form("quiz_form"):
-    answers = []
-
-    for index, (question, options, correct_index) in enumerate(questions):
-        st.caption(f"📌 Topic: {quiz_topic_list[index]}")
-
-        answer = st.radio(
-            f"Question {index + 1}: {question}",
-            options,
-            index=None,
-            key=f"answer_{quiz_subject}_{index}"
-        )
-
-        answers.append(answer)
-
-    submitted = st.form_submit_button("Submit Quiz")
-
-
-if submitted:
-    score = 0
-    topic_results = {}
-
-    for index, (question, options, correct_index) in enumerate(questions):
-        topic = quiz_topic_list[index]
-        correct_answer = options[correct_index]
-
-        is_correct = answers[index] == correct_answer
-
-        if topic not in topic_results:
-            topic_results[topic] = {
-                "correct": 0,
-                "total": 0,
-                "missed_questions": []
-            }
-
-        topic_results[topic]["total"] += 1
-
-        if is_correct:
-            score += 1
-            topic_results[topic]["correct"] += 1
-
-        else:
-            topic_results[topic]["missed_questions"].append({
-                "question": question,
-                "correct_answer": correct_answer
-            })
-
-    total_questions = len(questions)
-    percentage = round((score / total_questions) * 100)
-
-    st.session_state["latest_quiz_report"] = {
-        "subject": quiz_subject,
-        "score": score,
-        "total": total_questions,
-        "percentage": percentage,
-        "topic_results": topic_results
-    }
-
-
-# Show the latest report again on later reruns during this session.
-if "latest_quiz_report" in st.session_state:
-    report = st.session_state["latest_quiz_report"]
-
-    st.divider()
-    st.header("📊 6. Your Quiz Report")
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "Score",
-        f"{report['score']}/{report['total']}"
-    )
-
-    col2.metric(
-        "Percentage",
-        f"{report['percentage']}%"
-    )
-
-    col3.metric(
-        "Subject",
-        report["subject"]
-    )
-
-    st.subheader("Topic-wise performance")
-
-    weak_topics = []
-
-    for topic, result in report["topic_results"].items():
-        correct = result["correct"]
-        total = result["total"]
-
-        topic_percentage = round((correct / total) * 100)
-
-        st.write(f"**{topic}: {correct}/{total} correct**")
-        st.progress(topic_percentage / 100)
-
-        if correct < total:
-            weak_topics.append(topic)
-
-    st.divider()
-    st.header("🎯 7. What Should You Practise More?")
-
-    if weak_topics:
-        st.warning(
-            "You missed questions from the topics below. "
-            "Start your revision with these areas."
-        )
-
-        for topic in weak_topics:
-            result = report["topic_results"][topic]
-
-            st.markdown(f"### 📖 {topic}")
-
-            for missed in result["missed_questions"]:
-                st.write(f"**Question:** {missed['question']}")
-                st.write(
-                    f"**Correct answer:** {missed['correct_answer']}"
-                )
-
-            st.write(
-                f"**Your next step:** Revise **{topic}**, practise "
-                "similar questions, and then try another quiz."
+        for index, question in enumerate(subject_quiz):
+            st.markdown(
+                f"**Question {index + 1}: {question['question']}**"
             )
 
-    else:
-        st.success(
-            "Excellent! You answered every question correctly. "
-            "Try a more challenging quiz or move to the next topic."
+            current_answers[index] = st.radio(
+                "Choose an answer:",
+                question["options"],
+                index=None,
+                key=f"answer_{selected_subject}_{index}"
+            )
+
+        submitted = st.form_submit_button("Submit Quiz")
+
+    if submitted:
+        st.session_state.quiz_answers[selected_subject] = {
+            index: answer
+            for index, answer in current_answers.items()
+        }
+        st.session_state.quiz_submitted = True
+
+    if (
+        st.session_state.quiz_submitted
+        and selected_subject in st.session_state.quiz_answers
+    ):
+        answers = st.session_state.quiz_answers[selected_subject]
+
+        correct_count = 0
+        missed_topics = []
+
+        for index, question in enumerate(subject_quiz):
+            selected_answer = answers.get(index)
+            correct_answer = question["options"][question["answer"]]
+
+            if selected_answer == correct_answer:
+                correct_count += 1
+            else:
+                missed_topics.append(question["topic"])
+
+        score_percent = round(
+            correct_count / len(subject_quiz) * 100
         )
 
-    st.caption(
-        "Important: Each topic currently has one quiz question. "
-        "A missed question is a useful revision clue, not a complete "
-        "measurement of your knowledge. Adding more questions per topic "
-        "will make the recommendations more reliable."
+        st.subheader("📊 Your Quiz Results")
+
+        st.metric(
+            "Score",
+            f"{correct_count}/{len(subject_quiz)}"
+        )
+
+        st.progress(score_percent / 100)
+
+        st.write(f"**Percentage:** {score_percent}%")
+
+        if score_percent == 100:
+            st.success("Excellent! You answered every question correctly.")
+        elif score_percent >= 50:
+            st.info("Good effort! Review the missed topics and try again.")
+        else:
+            st.info("Keep learning! Read the notes and retry the quiz.")
+
+        if missed_topics:
+            st.subheader("📌 Topics to Revise")
+
+            for topic in sorted(set(missed_topics)):
+                st.write(f"- {topic}")
+
+        else:
+            st.success("No missed topics. Great work!")
+
+        if st.button("Try Quiz Again", key=f"retry_{selected_subject}"):
+            st.session_state.quiz_submitted = False
+            st.session_state.quiz_answers.pop(selected_subject, None)
+
+            for index in range(len(subject_quiz)):
+                answer_key = f"answer_{selected_subject}_{index}"
+                if answer_key in st.session_state:
+                    del st.session_state[answer_key]
+
+            st.rerun()
+
+# ---------------- OVERALL PROGRESS ----------------
+
+st.header("🏆 7. Your Learning Progress")
+
+all_topics = [
+    (subject, topic)
+    for subject, topic_list in roadmaps.items()
+    for topic in topic_list
+]
+
+total_all_steps = len(all_topics)
+
+completed_all_steps = sum(
+    1
+    for subject, topic in all_topics
+    if st.session_state.progress.get(
+        f"{subject}::{topic}",
+        False
     )
+)
 
+st.metric(
+    "Completed roadmap steps",
+    f"{completed_all_steps}/{total_all_steps}"
+)
 
-# ==================================================
-# 12. FOOTER
-# ==================================================
+st.progress(
+    completed_all_steps / total_all_steps
+    if total_all_steps
+    else 0
+)
+
+st.caption(
+    "Keep learning one step at a time. "
+    "Your progress file is stored locally when the environment allows it."
+)
 
 st.divider()
 
-st.caption(
-    "LearnPath AI | Machine Learning Recommendations | "
-    "Personalized Roadmaps | Topic-wise Quiz Feedback"
-)
+st.write("💡 **LearnPath AI:** Learn at your own pace, one topic at a time.")
