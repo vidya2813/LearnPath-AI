@@ -1,0 +1,21 @@
+python_level,quiz_score,study_minutes,goal,recommended_category
+0,20,30,0,Programming Fundamentals
+0,35,60,0,Programming Fundamentals
+0,45,30,0,Programming Fundamentals
+1,55,30,0,Programming Fundamentals
+1,65,60,0,AI Fundamentals
+1,70,45,1,AI Fundamentals
+1,75,60,1,AI Fundamentals
+2,70,30,1,AI Fundamentals
+2,80,60,1,Machine Learning
+2,90,45,1,Machine Learning
+2,85,60,2,Machine Learning
+2,95,90,2,Machine Learning
+0,25,45,1,Programming Fundamentals
+1,50,60,2,Programming Fundamentals
+2,60,30,2,AI Fundamentals
+0,40,90,2,Programming Fundamentals
+1,80,90,0,AI Fundamentals
+2,75,90,0,Machine Learning
+0,15,30,2,Programming Fundamentals
+1,68,45,1,AI Fundamentals
